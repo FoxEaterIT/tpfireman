@@ -39,7 +39,10 @@ for ($i = 0; $i -lt 3; $i++) {
     if ($latestParts[$i] -lt $currentParts[$i]) { break }
 }
 $requiredModules = @("history_store.py", "terminal_ui.py", "timeout_store.py")
+$requiredInstallFiles = @("install.ps1")
 $missingModules = @($requiredModules | Where-Object { -not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $_) -PathType Leaf) })
+$missingInstallFiles = @($requiredInstallFiles | Where-Object { -not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $_) -PathType Leaf) })
+$missingModules += $missingInstallFiles
 $repairNeeded = $missingModules.Count -gt 0
 if (-not $isNewer -and -not $repairNeeded) {
     Write-Host "tpfireman $currentVersion is up to date (latest: $latestVersion)." -ForegroundColor Green
@@ -72,7 +75,7 @@ $tempRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("tpfireman-update-" + [
 $zipPath = Join-Path $tempRoot "release.zip"
 $extractPath = Join-Path $tempRoot "extracted"
 $backupPath = Join-Path $tempRoot "backup"
-$required = @("main.py", "auth_store.py", "history_store.py", "terminal_ui.py", "timeout_store.py", "VERSION", "bin/tpfireman.bat", "uninstall.ps1", "update.ps1", "README.md")
+$required = @("main.py", "auth_store.py", "history_store.py", "terminal_ui.py", "timeout_store.py", "VERSION", "bin/tpfireman.bat", "uninstall.ps1", "update.ps1", "README.md", "install.ps1")
 $changedFiles = @()
 
 try {

@@ -116,7 +116,7 @@ tpfireman POST --auth my-api https://api.example.com/items --payload '{"name":"d
 
 ## 🗂️ Request history
 
-The default request timeout is 300 seconds (5 minutes), saved alongside authentication profiles and request history. Manage it with `tpfireman timeout show`, `tpfireman timeout edit [SECONDS]`, or `tpfireman timeout delete` (asks for confirmation and restores the 5-minute default). A per-request `--timeout SECONDS` overrides the saved value.
+The default request timeout is 300 seconds (5 minutes), saved alongside authentication profiles and request history. Manage it with `tpfireman timeout show`, `tpfireman timeout edit [SECONDS]`, or `tpfireman timeout delete` (asks for confirmation and restores the 5-minute default). A per-request `--timeout SECONDS` overrides the saved value. The release package also includes the installer script, so a fresh install from the release carries all required Python modules.
 
 Successful requests are saved locally with their method, URL, optional payload, export setting, and label. Entries are deduplicated by method and URL and updated when reused.
 

@@ -17,7 +17,7 @@
 - `bin/tpfireman.bat` — wrapper che gestisce `version`, `update`, `uninstall` e inoltra gli altri argomenti a `main.py`.
 - `README.md` — documentazione d'uso e installazione.
 
-Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py`, che richiedono Internet e usano JSONPlaceholder. I test locali coprono anche la configurazione timeout in `tests/test_timeout_store.py`. Non dichiara dipendenze esterne né configurazione di build. La logica usa la libreria standard Python (`urllib`, `json`, `os`, `datetime`, `unittest`).
+Il pacchetto di release deve includere `install.ps1` oltre ai moduli Python richiesti, così le installazioni dalla release copiano tutte le dipendenze. Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py`, che richiedono Internet e usano JSONPlaceholder. I test locali coprono anche la configurazione timeout in `tests/test_timeout_store.py`. Non dichiara dipendenze esterne né configurazione di build. La logica usa la libreria standard Python (`urllib`, `json`, `os`, `datetime`, `unittest`).
 
 ## TODO / prossimi step
 

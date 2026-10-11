@@ -57,6 +57,10 @@ try {
     Copy-Item -LiteralPath $sourceHistoryPath -Destination (Join-Path $installPath "history_store.py") -Force
     Copy-Item -LiteralPath $sourceTerminalUiPath -Destination (Join-Path $installPath "terminal_ui.py") -Force
     Copy-Item -LiteralPath $sourceTimeoutStorePath -Destination (Join-Path $installPath "timeout_store.py") -Force
+    # Verify the dependency beside main.py before completing installation.
+    if (-not (Test-Path -LiteralPath (Join-Path $installPath "timeout_store.py") -PathType Leaf)) {
+        throw "Required module timeout_store.py was not installed."
+    }
     Copy-Item -LiteralPath $sourceWrapperPath -Destination (Join-Path $installBinPath "tpfireman.bat") -Force
     Copy-Item -LiteralPath $sourceUninstallPath -Destination (Join-Path $installPath "uninstall.ps1") -Force
     Copy-Item -LiteralPath $sourceVersionPath -Destination (Join-Path $installPath "VERSION") -Force

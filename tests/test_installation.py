@@ -17,10 +17,20 @@ class InstallationChecks(unittest.TestCase):
         self.assertIn('"tpfireman.bat"', script)
         self.assertIn('Copy-Item -LiteralPath $sourceMainPath', script)
         self.assertIn('Copy-Item -LiteralPath $sourceAuthPath', script)
+        self.assertIn('$sourceTimeoutStorePath = Join-Path $scriptDir "timeout_store.py"', script)
+        self.assertIn('Copy-Item -LiteralPath $sourceTimeoutStorePath', script)
+        self.assertIn('$sourceTimeoutStorePath', script.split('foreach ($requiredFile in @(', 1)[1].split(')) {', 1)[0])
         self.assertIn('Get-Command python', script)
         self.assertIn('Join-Path $scriptDir "update.ps1"', script)
         self.assertIn('FoxEaterIT/tpfireman', (ROOT / "update.ps1").read_text(encoding="utf-8"))
-        self.assertIn('tpfireman-source.zip', (ROOT / "update.ps1").read_text(encoding="utf-8"))
+        updater = (ROOT / "update.ps1").read_text(encoding="utf-8")
+        self.assertIn('tpfireman-source.zip', updater)
+        self.assertIn('"timeout_store.py"', updater)
+        release_script = ROOT / "release.ps1"
+        if release_script.exists():
+            release = release_script.read_text(encoding="utf-8")
+            self.assertIn('"timeout_store.py"', release)
+            self.assertIn('"install.ps1"', release)
         self.assertIn('Copy-Item -LiteralPath $sourceUninstallPath', script)
         self.assertIn('Copy-Item -LiteralPath $sourceVersionPath', script)
         self.assertIn('Copy-Item -LiteralPath $sourceUpdatePath', script)
@@ -50,7 +60,7 @@ class InstallationChecks(unittest.TestCase):
         powershell = shutil.which("pwsh") or shutil.which("powershell")
         if not powershell:
             self.skipTest("PowerShell is not available in this environment")
-        for script_name in ("install.ps1", "uninstall.ps1", "update.ps1"):
+        for script_name in ("install.ps1", "uninstall.ps1", "update.ps1", "release.ps1"):
             with self.subTest(script=script_name):
                 result = subprocess.run(
                     [powershell, "-NoProfile", "-Command",
