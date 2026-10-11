@@ -9,7 +9,8 @@
 - `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, controllo best-effort della release all'avvio, richiesta HTTP, stampa della risposta ed esportazione facoltativa; mostra anche i profili auth salvati e accetta `--auth`, `--payload` e `--export`.
 - `auth_store.py` — gestione profili auth; `tpfireman auth` e `tpfireman auth list` mostrano elenco e help.
 - `history_store.py` — archivio per utente delle richieste HTTP riutilizzabili, con etichetta distinta dall'URL, deduplicazione per metodo e URL e help esplicito senza prompt di selezione.
-- `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente; installer e updater devono distribuire tutti i moduli Python, incluso `history_store.py`.
+- `terminal_ui.py` — stili ANSI e pannelli per helper, con supporto `NO_COLOR` e output non interattivo senza colori.
+- `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente; installer e updater devono distribuire tutti i moduli Python, incluso `history_store.py` e `terminal_ui.py`.
 - `VERSION` — versione SemVer copiata nell'installazione.
 - `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, ripara anche moduli mancanti reinstallando la release corrente, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
 - `bin/tpfireman.bat` — wrapper che gestisce `version`, `update`, `uninstall` e inoltra gli altri argomenti a `main.py`.

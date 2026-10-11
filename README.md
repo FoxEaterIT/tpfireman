@@ -33,7 +33,7 @@ Send API requests, manage authentication, and inspect responses directly from Wi
 |:--|:--|
 | 🚀 | `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` requests |
 | 🧩 | Interactive JSON payload input and automatic `Content-Type` handling |
-| 🎨 | Pretty-printed JSON responses and colorized terminal output |
+| 🎨 | Pretty-printed JSON responses and colorized terminal output (automatically disabled for redirected output or `NO_COLOR`) |
 | 📦 | Export responses to a file, with confirmation before overwriting |
 | 🔐 | Custom headers and reusable authentication profiles |
 | 🛡️ | Secrets encrypted with Windows DPAPI; sensitive values are never displayed |
@@ -57,7 +57,7 @@ Open PowerShell in the application files directory and run:
 .\install.ps1
 ```
 
-The installer copies the app, including its request-history module, to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%LOCALAPPDATA%\tpfireman` for user data, and adds the command to your user `PATH`. No administrator privileges or additional Python dependencies are required. Restart your terminal when installation is complete.
+The installer copies the app and its terminal UI module to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%LOCALAPPDATA%\tpfireman` for user data, and adds the command to your user `PATH`. No administrator privileges or additional Python dependencies are required. Restart your terminal when installation is complete.
 
 ## 🚦 Quick start
 

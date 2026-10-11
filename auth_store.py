@@ -6,6 +6,7 @@ import os
 import sys
 import tempfile
 import uuid
+from terminal_ui import BLUE, CYAN, DIM, GREEN, YELLOW, panel, paint, section
 from ctypes import wintypes
 
 APP_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "tpfireman")
@@ -163,12 +164,14 @@ def auth_command(args):
         profiles = _read()
         if command == "list":
             list_auth_profiles()
-            print("Auth commands:")
-            print("  tpfireman auth add")
-            print("  tpfireman auth edit <name-or-id>")
-            print("  tpfireman auth rename <name-or-id> <new-name>")
-            print("  tpfireman auth delete <name-or-id> [name-or-id ...] | --all")
-            print("  tpfireman auth list")
+            panel("AUTH COMMANDS", [
+                ("tpfireman auth add", "Create a profile"),
+                ("tpfireman auth edit <name|id>", "Edit a profile"),
+                ("tpfireman auth rename <name|id> <new-name>", "Rename a profile"),
+                ("tpfireman auth delete <name|id> [..]", "Delete selected profiles (confirmation required)"),
+                ("tpfireman auth delete --all", "Delete all profiles (confirmation required)"),
+                ("tpfireman auth", "Show profiles and this help"),
+            ])
         elif command in ("delete", "remove"):
             if "--all" not in args[2:]:
                 refs = args[2:]
@@ -305,12 +308,12 @@ def _oauth_token(values, code_flow=False):
 def list_auth_profiles():
     """Display saved authentication profiles without revealing secret values."""
     profiles = _read()
+    section("Saved authentication profiles")
     if not profiles:
-        print("No saved authentication profiles.")
+        print(paint("  No profiles yet.", DIM))
         return
-    print("Saved authentication profiles:")
-    for profile in profiles:
-        print("  {}  {} ({})".format(profile["id"], profile["name"], profile["type"]))
+    for index, profile in enumerate(profiles, 1):
+        print("  {} {}  {}  {}".format(paint("{:02d}".format(index), CYAN), paint(profile["id"], DIM), paint(profile["name"], GREEN), paint("({})".format(profile["type"]), BLUE)))
 
 
 def select_auth_headers(url, profile_ref=None):

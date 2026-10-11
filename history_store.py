@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import uuid
+from terminal_ui import BLUE, CYAN, DIM, GREEN, YELLOW, panel, paint, section
 
 APP_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "tpfireman")
 STORE_PATH = os.path.join(APP_DIR, "request_history.json")
@@ -110,18 +111,20 @@ def history_command(args):
                 selected = resolve_request(args[1], requests)
                 _review_and_run(selected)
                 return True
+        section("Saved request history")
         if not requests:
-            print("No saved requests.")
-            return True
-        for item in requests:
-            label = item.get("label", item.get("name", item["url"]))
-            shown_label = "" if label == item["url"] else "  [{}]".format(label)
-            print("{}  {}  {}{}  export={}".format(item["id"], item["method"], item["url"], shown_label, str(item.get("export", False)).lower()))
-        print("History commands:")
-        print("  tpfireman history <id|label|url>                 Review and run a saved request")
-        print("  tpfireman history edit <id|label|url>            Edit a request without running it")
-        print("  tpfireman history delete <id|label> [<...>]      Delete one or more requests")
-        print("  tpfireman history list                          Show this list")
+            print(paint("  No saved requests yet.", DIM))
+        else:
+            for index, item in enumerate(requests, 1):
+                label = item.get("label", item.get("name", item["url"]))
+                shown_label = "" if label == item["url"] else "  " + paint("[{}]".format(label), GREEN)
+                print("  {} {}  {}  {}{}  {}".format(paint("{:02d}".format(index), CYAN), paint(item["id"], DIM), paint(item["method"], BLUE), item["url"], shown_label, paint("export={}".format(str(item.get("export", False)).lower()), DIM)))
+        panel("HISTORY COMMANDS", [
+            ("tpfireman history <id|label|url>", "Review and run a saved request"),
+            ("tpfireman history edit <id|label|url>", "Edit without running"),
+            ("tpfireman history delete <id|label> [..]", "Delete one or more (confirmation required)"),
+            ("tpfireman history", "Show history and this help"),
+        ])
         return True
     except (ValueError, RuntimeError, OSError, KeyError) as exc:
         print("History error: {}".format(exc))

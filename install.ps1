@@ -5,6 +5,7 @@ $sourceBinPath = Join-Path $scriptDir "bin"
 $sourceMainPath = Join-Path $scriptDir "main.py"
 $sourceAuthPath = Join-Path $scriptDir "auth_store.py"
 $sourceHistoryPath = Join-Path $scriptDir "history_store.py"
+$sourceTerminalUiPath = Join-Path $scriptDir "terminal_ui.py"
 $sourceWrapperPath = Join-Path $sourceBinPath "tpfireman.bat"
 $sourceUninstallPath = Join-Path $scriptDir "uninstall.ps1"
 $sourceVersionPath = Join-Path $scriptDir "VERSION"
@@ -18,7 +19,7 @@ if ($currentPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::A
     exit 1
 }
 
-foreach ($requiredFile in @($sourceMainPath, $sourceAuthPath, $sourceHistoryPath, $sourceWrapperPath, $sourceUninstallPath, $sourceVersionPath, $sourceUpdatePath, $sourceReadmePath)) {
+foreach ($requiredFile in @($sourceMainPath, $sourceAuthPath, $sourceHistoryPath, $sourceTerminalUiPath, $sourceWrapperPath, $sourceUninstallPath, $sourceVersionPath, $sourceUpdatePath, $sourceReadmePath)) {
     if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) {
         Write-Host "Error: required application file was not found: $requiredFile" -ForegroundColor Red
         exit 1
@@ -53,6 +54,7 @@ try {
     Copy-Item -LiteralPath $sourceMainPath -Destination (Join-Path $installPath "main.py") -Force
     Copy-Item -LiteralPath $sourceAuthPath -Destination (Join-Path $installPath "auth_store.py") -Force
     Copy-Item -LiteralPath $sourceHistoryPath -Destination (Join-Path $installPath "history_store.py") -Force
+    Copy-Item -LiteralPath $sourceTerminalUiPath -Destination (Join-Path $installPath "terminal_ui.py") -Force
     Copy-Item -LiteralPath $sourceWrapperPath -Destination (Join-Path $installBinPath "tpfireman.bat") -Force
     Copy-Item -LiteralPath $sourceUninstallPath -Destination (Join-Path $installPath "uninstall.ps1") -Force
     Copy-Item -LiteralPath $sourceVersionPath -Destination (Join-Path $installPath "VERSION") -Force

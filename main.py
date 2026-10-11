@@ -10,6 +10,7 @@ from auth_store import auth_command, list_auth_profiles, select_auth_headers
 from history_store import history_command, save_request
 from datetime import datetime
 from urllib.parse import urlsplit
+from terminal_ui import BOLD, BLUE, CYAN, DIM, GREEN, RESET, YELLOW, panel, paint, section
 
 # ANSI Color Codes
 WHITE = "\033[97m"
@@ -244,9 +245,13 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         check_admin()
 
     if len(argv) < 2:
-        print(f"{YELLOW}Usage: tpfireman <METHOD> <URL> [--auth NAME_OR_ID] [--export TRUE|FALSE] [--payload JSON] [--timeout SECONDS]{RESET}")
-        print(f"Methods: GET, POST, PUT, DELETE, PATCH")
-        print(f"Example: tpfireman POST https://api.example.com/data")
+        panel("tpfireman · HELP", [
+            ("Usage", "tpfireman <METHOD> <URL> [OPTIONS]"),
+            ("Methods", "GET · POST · PUT · PATCH · DELETE"),
+            ("Options", "--auth NAME_OR_ID · --payload JSON · --export TRUE|FALSE · --timeout SECONDS"),
+            ("Example", "tpfireman POST https://api.example.com/data"),
+            ("Manage", "tpfireman history   |   tpfireman auth"),
+        ], BLUE)
         return
 
     method = argv[0].strip().upper()
