@@ -28,8 +28,6 @@ def print_logo():
         \_/ \_|   \_|    \___/\_| \_\____/\_|  |_/\_| |_/\_| \_/
      """)
     print(f"{WHITE}  --- API Testing Client ---{RESET}")
-    print(f'{CYAN}Type "help" for usage instructions.{RESET}\n')
-
 
 def check_admin():
     """Exit when running elevated on Windows; allow other platforms unchanged."""
