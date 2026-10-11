@@ -8,7 +8,7 @@
 
 - `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, controllo best-effort della release all'avvio, richiesta HTTP, stampa della risposta ed esportazione facoltativa; mostra anche i profili auth salvati e accetta `--auth`, `--payload` e `--export`.
 - `history_store.py` — archivio per utente delle richieste HTTP riutilizzabili, con etichetta distinta dall'URL e deduplicazione per metodo e URL.
-- `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente.
+- `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente; installer e updater devono distribuire tutti i moduli Python, incluso `history_store.py`.
 - `VERSION` — versione SemVer copiata nell'installazione.
 - `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
 - `bin/tpfireman.bat` — wrapper che gestisce `version`, `update`, `uninstall` e inoltra gli altri argomenti a `main.py`.
@@ -61,6 +61,6 @@ Dopo modifiche a `main.py`, verificare almeno la sintassi con:
 python -m py_compile main.py
 ```
 
-Dopo modifiche all'installer, controllare la sintassi PowerShell e, quando possibile, provarlo in un ambiente Windows non amministratore. Per la logica HTTP, preferire test con un server locale o mock, senza dipendere da servizi esterni.
+Dopo modifiche all'installer o all'updater, controllare la sintassi PowerShell e, quando possibile, provarli in un ambiente Windows non amministratore. Per la logica HTTP, preferire test con un server locale o mock, senza dipendere da servizi esterni.
 
 I test d'integrazione online si eseguono con `python -m unittest discover -s tests -v` e richiedono una connessione Internet.

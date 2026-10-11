@@ -54,7 +54,7 @@ Open PowerShell in the application files directory and run:
 .\install.ps1
 ```
 
-The installer copies the app to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%LOCALAPPDATA%\tpfireman` for user data, and adds the command to your user `PATH`. No administrator privileges or additional Python dependencies are required. Restart your terminal when installation is complete.
+The installer copies the app, including its request-history module, to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%LOCALAPPDATA%\tpfireman` for user data, and adds the command to your user `PATH`. No administrator privileges or additional Python dependencies are required. Restart your terminal when installation is complete.
 
 ## 🚦 Quick start
 
@@ -108,7 +108,9 @@ tpfireman auth rename
 tpfireman auth delete
 ```
 
-Delete all profiles with `tpfireman auth delete --all` (confirmation required). Profile data is stored in `%LOCALAPPDATA%\tpfireman\auth_profiles.json`; secrets are protected with Windows DPAPI.
+Request profiles are stored in `%LOCALAPPDATA%\tpfireman\auth_profiles.json`; secrets are protected with Windows DPAPI. Request history is stored separately in `%LOCALAPPDATA%\tpfireman\request_history.json`.
+
+Delete all profiles with `tpfireman auth delete --all` (confirmation required).
 
 ## 📤 Responses and exports
 
