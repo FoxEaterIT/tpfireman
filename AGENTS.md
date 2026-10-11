@@ -2,14 +2,14 @@
 
 ## Panoramica
 
-`tpfireman` è un piccolo client HTTP da terminale per Windows, scritto in Python. L'installer PowerShell copia l'app in `%LOCALAPPDATA%\Programs\tpfireman`, aggiunge `bin` al PATH dell'utente e mantiene i dati separati in `%LOCALAPPDATA%\tpfireman`. La versione è definita nel file `VERSION`; il wrapper batch gestisce anche versione e disinstallazione.
+`tpfireman` è un piccolo client HTTP da terminale per Windows, scritto in Python. L'installer PowerShell copia l'app in `%LOCALAPPDATA%\Programs\tpfireman`, aggiunge `bin` al PATH dell'utente e mantiene i dati separati in `%LOCALAPPDATA%\tpfireman`. La versione è definita nel file `VERSION`; all'avvio il client verifica in modo best-effort l'ultima release GitHub e suggerisce `tpfireman update` se disponibile. Il wrapper batch gestisce versione, aggiornamento e disinstallazione.
 
 ## Struttura del progetto
 
-- `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, richiesta HTTP, stampa della risposta ed esportazione facoltativa.
+- `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, controllo best-effort della release all'avvio, richiesta HTTP, stampa della risposta ed esportazione facoltativa.
 - `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente.
 - `VERSION` — versione SemVer copiata nell'installazione.
-- `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`.
+- `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
 - `bin/tpfireman.bat` — wrapper che gestisce `version`, `update`, `uninstall` e inoltra gli altri argomenti a `main.py`.
 - `README.md` — documentazione d'uso e installazione.
 

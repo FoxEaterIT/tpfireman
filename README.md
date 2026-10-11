@@ -37,6 +37,7 @@ DELETE → remove
 | 🛡️ | Secrets encrypted with Windows DPAPI; sensitive values are never displayed |
 | 🔑 | Bearer, Basic, API key, and OAuth2 (Client Credentials / Authorization Code with PKCE) |
 | ⏱️ | Configurable timeouts and consistent display of HTTP error responses |
+| 🔔 | Best-effort startup check for newer GitHub releases, with an update command suggestion |
 
 ## 📥 Installation
 
@@ -106,7 +107,7 @@ tpfireman update
 tpfireman uninstall
 ```
 
-Updates check [FoxEaterIT/tpfireman GitHub Releases](https://github.com/FoxEaterIT/tpfireman), ask for confirmation, and preserve user data. Uninstallation requires confirmation and removes the application, its exact `PATH` entry, and all user data, including authentication profiles. **Removing user data cannot be undone.**
+On startup, tpfireman makes a best-effort check of [FoxEaterIT/tpfireman GitHub Releases](https://github.com/FoxEaterIT/tpfireman). If a newer version is available, it suggests running `tpfireman update`; network or API failures do not prevent the client from starting. The check uses a short timeout and does not download or install anything automatically. Run `tpfireman update` to check and install an update; the updater asks for confirmation (accepted responses: `YES`, `yes`, `Y`, or `y`) and preserves user data. Uninstallation requires confirmation and removes the application, its exact `PATH` entry, and all user data, including authentication profiles. **Removing user data cannot be undone.**
 
 > [!NOTE]
 > To publish a release, use a SemVer tag (for example, `v1.2.3`) and attach `tpfireman-source.zip` containing the application files and a matching `VERSION` file.
