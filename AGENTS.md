@@ -2,7 +2,7 @@
 
 ## Panoramica
 
-`tpfireman` è un piccolo client HTTP da terminale per Windows, scritto in Python. L'installer PowerShell copia l'app in `%LOCALAPPDATA%\Programs\tpfireman`, aggiunge `bin` al PATH dell'utente e mantiene i dati separati in `%LOCALAPPDATA%\tpfireman`. La versione è definita nel file `VERSION`; all'avvio il client verifica in modo best-effort l'ultima release GitHub e suggerisce `tpfireman update` se disponibile. Il wrapper batch gestisce versione, aggiornamento e disinstallazione.
+`tpfireman` è un piccolo client HTTP da terminale per Windows, scritto in Python. L'installer PowerShell copia l'app in `%LOCALAPPDATA%\Programs\tpfireman`, aggiunge `bin` al PATH dell'utente e mantiene i dati separati in `%LOCALAPPDATA%\tpfireman`. La versione è definita nel file `VERSION`; all'avvio il client verifica in modo best-effort l'ultima release GitHub e suggerisce `tpfireman update` se disponibile. Senza argomenti avvia una sessione interattiva; `exit` e `quit` chiudono la sessione da qualsiasi prompt interattivo, solo se costituiscono l'intera risposta (ignorando maiuscole/minuscole e spazi esterni). Il wrapper batch gestisce versione, aggiornamento e disinstallazione.
 
 ## Struttura del progetto
 

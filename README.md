@@ -68,6 +68,8 @@ GET https://jsonplaceholder.typicode.com/posts/1
 # Or choose guided prompts from the session prompt
 guided
 
+Type `exit` or `quit` at any interactive prompt to close the session. The command is recognized only when it is the complete input (surrounding spaces and letter case are ignored).
+
 # Send a GET request
 tpfireman GET https://jsonplaceholder.typicode.com/posts/1
 
