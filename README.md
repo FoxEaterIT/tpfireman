@@ -156,7 +156,7 @@ tpfireman uninstall
 
 At startup, tpfireman checks GitHub Releases on a best-effort basis and suggests `tpfireman update` when a newer version is available. Network or API failures do not prevent startup; the check does not install anything automatically.
 
-Run `tpfireman update` to check and install an update. If the installed history module is missing, the updater offers to reinstall the latest release even when the version number is current. Confirmation accepts `YES`, `yes`, `Y`, or `y`; user data is preserved.
+Run `tpfireman update` to check and install an update. If a required application module such as `history_store.py` or `terminal_ui.py` is missing, the updater offers to reinstall the latest release even when the version number is current. Confirmation accepts `YES`, `yes`, `Y`, or `y`; user data is preserved.
 
 > [!WARNING]
 > Uninstallation requires confirmation and removes the application, its exact `PATH` entry, and all tpfireman user data, including authentication profiles. **This cannot be undone.**

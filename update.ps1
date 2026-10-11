@@ -38,14 +38,15 @@ for ($i = 0; $i -lt 3; $i++) {
     if ($latestParts[$i] -gt $currentParts[$i]) { $isNewer = $true; break }
     if ($latestParts[$i] -lt $currentParts[$i]) { break }
 }
-$historyModulePath = Join-Path $PSScriptRoot "history_store.py"
-$repairNeeded = -not (Test-Path -LiteralPath $historyModulePath -PathType Leaf)
+$requiredModules = @("history_store.py", "terminal_ui.py")
+$missingModules = @($requiredModules | Where-Object { -not (Test-Path -LiteralPath (Join-Path $PSScriptRoot $_) -PathType Leaf) })
+$repairNeeded = $missingModules.Count -gt 0
 if (-not $isNewer -and -not $repairNeeded) {
     Write-Host "tpfireman $currentVersion is up to date (latest: $latestVersion)." -ForegroundColor Green
     exit 0
 }
 if ($repairNeeded -and -not $isNewer) {
-    Write-Host "A required application module is missing; the latest version will be reinstalled to repair it." -ForegroundColor Yellow
+    Write-Host "Required application module(s) missing: $($missingModules -join ', '). The latest version will be reinstalled to repair them." -ForegroundColor Yellow
 }
 
 $asset = $release.assets | Where-Object { $_.name -eq "tpfireman-source.zip" } | Select-Object -First 1
