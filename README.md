@@ -19,11 +19,13 @@ Send API requests, manage authentication, and inspect responses directly from Wi
 
 `tpfireman` is a lightweight, interactive command-line client for testing HTTP APIs. It uses Python's standard library, so there are no third-party packages to install.
 
-```text
-GET  → read data         POST   → create resources
-PUT  → replace           PATCH  → modify
-DELETE → remove
-```
+| Method | Purpose |
+|:--|:--|
+| `GET` | Read data |
+| `POST` | Create resources |
+| `PUT` | Replace resources |
+| `PATCH` | Modify resources |
+| `DELETE` | Remove resources |
 
 ## ✨ Features
 
@@ -38,6 +40,7 @@ DELETE → remove
 | 🔑 | Bearer, Basic, API key, and OAuth2 (Client Credentials / Authorization Code with PKCE) |
 | ⏱️ | Configurable timeouts and consistent display of HTTP error responses |
 | 🔔 | Best-effort startup check for newer GitHub releases, with an update command suggestion |
+| 🗂️ | Reusable request history with labels, editing, and deletion |
 
 ## 📥 Installation
 
@@ -58,22 +61,26 @@ The installer copies the app, including its request-history module, to `%LOCALAP
 
 ## 🚦 Quick start
 
-```powershell
-# Start an interactive session (type exit to leave)
+### Interactive session
+
+Start a persistent session, then enter requests at the prompt:
+
+```text
 tpfireman
-
-# Send a request directly at the session prompt
 GET https://jsonplaceholder.typicode.com/posts/1
-
-# Or choose guided prompts from the session prompt
+POST https://jsonplaceholder.typicode.com/posts
 guided
+```
 
-Type `exit` or `quit` at any interactive prompt to close the session. The command is recognized only when it is the complete input (surrounding spaces and letter case are ignored).
+Use `guided` for step-by-step prompts. Type `exit` or `quit` at any interactive prompt to close the session; the complete input must be the command (case and surrounding spaces are ignored).
 
-# Send a GET request
+### Direct requests
+
+```powershell
+# GET request
 tpfireman GET https://jsonplaceholder.typicode.com/posts/1
 
-# Send a POST request; the client will ask whether you want to enter a JSON payload
+# POST request; payload is entered interactively
 tpfireman POST https://jsonplaceholder.typicode.com/posts
 
 # Set a 30-second timeout
@@ -84,38 +91,60 @@ tpfireman GET https://jsonplaceholder.typicode.com/posts/1 EXPORT:TRUE
 ```
 
 > [!TIP]
-> For `POST`, `PUT`, and `PATCH`, you can enter JSON interactively. Payloads are not accepted as command-line arguments. You can also add custom headers interactively; their values are entered without being displayed.
+> For `POST`, `PUT`, and `PATCH`, JSON payloads can be pasted across multiple lines; finish with an empty line. Custom header values are entered without being displayed.
 
-### Syntax
-
-```text
-tpfireman <METHOD> <URL> [--timeout SECONDS] [EXPORT:TRUE|FALSE]
-```
-
-### Request history
-
-Requests that complete successfully are saved locally with their method, URL, optional JSON payload, and export setting. At session startup, saved authentication profiles are listed by ID, name, and type (never secret values). Specify one directly with `--auth NAME_OR_ID`, for example `GET --auth my-api https://api.example.com --export false`; optional payloads can be passed as `--payload '{\"key\":\"value\"}'`. Entries store URL and label separately, are deduplicated by method and URL, and are updated when reused. A new entry defaults to its URL as the label; the history list hides that redundant label. When reviewing an entry, change its label or enter `=` to reset the label to the current URL. Entries can be selected by ID, label, or URL. From the interactive session, enter `history` to list entries and show the available commands without prompting for a selection. Choose an entry explicitly with `tpfireman history <id-or-label-or-url>`. Edit an entry without sending it using `tpfireman history edit <id-or-label-or-url>`; delete one or more entries by ID or label with `tpfireman history delete <id-or-label> [id-or-label ...]` (confirmation required). Review the saved fields before sending; press Enter to keep each value, and type `-` to clear a payload. Multiline JSON ends with an empty line. Changes are saved automatically.
-
-### Authentication profiles
-
-Manage reusable profiles without exposing secrets in the terminal:
+### Request syntax
 
 ```text
-tpfireman auth
-tpfireman auth add
-tpfireman auth list
-tpfireman auth edit
-tpfireman auth rename
-tpfireman auth delete
+tpfireman <METHOD> <URL> [--auth NAME_OR_ID] [--payload JSON] [--export TRUE|FALSE] [--timeout SECONDS]
 ```
 
-Request profiles are stored in `%LOCALAPPDATA%\tpfireman\auth_profiles.json`; secrets are protected with Windows DPAPI. Request history is stored separately in `%LOCALAPPDATA%\tpfireman\request_history.json`.
+Example with a saved authentication profile:
 
-`tpfireman auth` (or `tpfireman auth list`) displays saved profiles and the available auth commands; it does not prompt for a selection. Delete all profiles with `tpfireman auth delete --all` (confirmation required).
+```powershell
+tpfireman GET --auth my-api https://api.example.com --export false
+tpfireman POST --auth my-api https://api.example.com/items --payload '{"name":"demo"}' --export true
+```
+
+## 🗂️ Request history
+
+Successful requests are saved locally with their method, URL, optional payload, export setting, and label. Entries are deduplicated by method and URL and updated when reused.
+
+- New entries use the URL as their default label; redundant labels are hidden in the list.
+- Select entries by ID, label, or URL.
+- In the label prompt, enter `=` to reset the label to the current URL.
+- In the payload prompt, enter `-` to clear the payload; press Enter to keep any current value.
+- Multiline JSON payload input ends with an empty line.
+
+| Command | Action |
+|:--|:--|
+| `tpfireman history` | List saved requests and show available commands |
+| `tpfireman history <id\|label\|url>` | Review and run a saved request |
+| `tpfireman history edit <id\|label\|url>` | Edit a request without running it |
+| `tpfireman history delete <id\|label> [<id\|label> ...]` | Delete one or more requests (confirmation required) |
+
+Changes made while reviewing a request are saved automatically. History is stored in `%LOCALAPPDATA%\tpfireman\request_history.json`.
+
+## 🔐 Authentication profiles
+
+Manage reusable profiles without exposing secret values:
+
+| Command | Action |
+|:--|:--|
+| `tpfireman auth` | List saved profiles and show available commands |
+| `tpfireman auth add` | Create a profile |
+| `tpfireman auth edit <name-or-id>` | Edit a profile |
+| `tpfireman auth rename <name-or-id> <new-name>` | Rename a profile |
+| `tpfireman auth delete <name-or-id> [name-or-id ...]` | Delete selected profiles (confirmation required) |
+| `tpfireman auth delete --all` | Delete all profiles (confirmation required) |
+
+`tpfireman auth list` is an alias for `tpfireman auth`. Profiles are stored in `%LOCALAPPDATA%\tpfireman\auth_profiles.json`; secrets are protected with Windows DPAPI.
 
 ## 📤 Responses and exports
 
-The client displays the status code, headers, and response body, including for HTTP errors. JSON bodies are formatted for readability; non-JSON text remains readable as-is. Use `EXPORT:TRUE` to choose where to save a response. If the file already exists, tpfireman asks before overwriting it. Press Enter to use `api_response.txt` in the current directory.
+The client displays the status code, headers, and response body, including for HTTP errors. JSON bodies are formatted for readability; non-JSON text remains readable as-is.
+
+Use `EXPORT:TRUE` (or `--export true`) to save a response. tpfireman prompts for a file path; press Enter to use `api_response.txt` in the current directory. Existing files are never overwritten without confirmation.
 
 ## 🔄 Version, updates, and uninstall
 
@@ -125,14 +154,19 @@ tpfireman update
 tpfireman uninstall
 ```
 
-On startup, tpfireman makes a best-effort check of [FoxEaterIT/tpfireman GitHub Releases](https://github.com/FoxEaterIT/tpfireman). If a newer version is available, it suggests running `tpfireman update`; network or API failures do not prevent the client from starting. The check uses a short timeout and does not download or install anything automatically. Run `tpfireman update` to check and install an update; if the installed history module is missing, the updater repairs it by reinstalling the latest release even when the version number is current. The updater asks for confirmation (accepted responses: `YES`, `yes`, `Y`, or `y`) and preserves user data. Uninstallation requires confirmation and removes the application, its exact `PATH` entry, and all user data, including authentication profiles. **Removing user data cannot be undone.**
+At startup, tpfireman checks GitHub Releases on a best-effort basis and suggests `tpfireman update` when a newer version is available. Network or API failures do not prevent startup; the check does not install anything automatically.
+
+Run `tpfireman update` to check and install an update. If the installed history module is missing, the updater offers to reinstall the latest release even when the version number is current. Confirmation accepts `YES`, `yes`, `Y`, or `y`; user data is preserved.
+
+> [!WARNING]
+> Uninstallation requires confirmation and removes the application, its exact `PATH` entry, and all tpfireman user data, including authentication profiles. **This cannot be undone.**
 
 > [!NOTE]
 > To publish a release, use a SemVer tag (for example, `v1.2.3`) and attach `tpfireman-source.zip` containing the application files and a matching `VERSION` file.
 
 ## 🧪 Tests
 
-Run the installation, wrapper, and authentication checks with:
+Run local installation, wrapper, authentication, export, and response checks with:
 
 ```powershell
 python -m unittest tests.test_installation -v
@@ -145,7 +179,7 @@ Integration tests send live requests to JSONPlaceholder and require an internet 
 python -m unittest discover -s tests -v
 ```
 
-JSONPlaceholder simulates write operations; changes sent with `POST`, `PUT`, `PATCH`, and `DELETE` are not persisted. The Windows token check and wrapper smoke test are only available on Windows. To verify the standard-user scenario, run the tests from a non-elevated session.
+JSONPlaceholder simulates write operations; changes sent with `POST`, `PUT`, `PATCH`, and `DELETE` are not persisted. The Windows token check and wrapper smoke test are only available on Windows. To verify the standard-user scenario, run tests from a non-elevated session.
 
 ---
 

@@ -50,6 +50,7 @@ Aggiornare questa lista man mano che le voci vengono completate e non ripristina
 - Mantenere il progetto semplice e basato sulla libreria standard, salvo una necessità concreta che giustifichi dipendenze aggiuntive.
 - Preservare la compatibilità Windows: i percorsi usati dall'installer e dal wrapper devono funzionare indipendentemente dalla directory corrente.
 - Mantenere README, messaggi CLI, installer e nome del wrapper coerenti tra loro.
+- Ogni modifica al README deve preservare o migliorare una presentazione estetica, moderna e coerente: struttura scansionabile, sezioni concise, esempi separati dai commenti del codice, callout Markdown e tabelle quando aiutano la leggibilità; evitare paragrafi molto densi e contenuti fuori dai blocchi di codice in sezioni di comandi.
 - Validare input e argomenti CLI con messaggi d'errore chiari; non ignorare silenziosamente valori non validi.
 - Non includere credenziali o dati sensibili negli esempi, nei log o nei file di risposta.
 - Le risposte HTTP possono contenere dati non JSON: mantenere la gestione del testo non JSON oltre al pretty-print JSON.
