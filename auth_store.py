@@ -162,10 +162,7 @@ def auth_command(args):
     try:
         profiles = _read()
         if command == "list":
-            if not profiles:
-                print("No saved authentication profiles.")
-            for profile in profiles:
-                print("{}  {}  ({})".format(profile["id"], profile["name"], profile["type"]))
+            list_auth_profiles()
         elif command in ("delete", "remove"):
             if "--all" not in args[2:]:
                 refs = args[2:]
@@ -299,17 +296,31 @@ def _oauth_token(values, code_flow=False):
         return json.loads(response.read().decode())["access_token"]
 
 
-def select_auth_headers(url):
+def list_auth_profiles():
+    """Display saved authentication profiles without revealing secret values."""
+    profiles = _read()
+    if not profiles:
+        print("No saved authentication profiles.")
+        return
+    print("Saved authentication profiles:")
+    for profile in profiles:
+        print("  {}  {} ({})".format(profile["id"], profile["name"], profile["type"]))
+
+
+def select_auth_headers(url, profile_ref=None):
     """Apply a selected profile and return headers, redaction values, and request URL."""
     profiles = _read()
-    if not profiles or input("Use a saved authentication profile? (y/n): ").strip().lower() != "y":
-        return {}, [], url
-    for number, profile in enumerate(profiles, 1):
-        print("{}. {} ({})".format(number, profile["name"], profile["type"]))
-    choice = _prompt("Select profile number: ")
-    if not choice.isdigit() or not 1 <= int(choice) <= len(profiles):
-        raise ValueError("Invalid profile selection.")
-    profile = profiles[int(choice) - 1]
+    if profile_ref:
+        profile = _profile_by(profile_ref, profiles)
+    else:
+        if not profiles or input("Use a saved authentication profile? (y/n): ").strip().lower() != "y":
+            return {}, [], url
+        for number, profile in enumerate(profiles, 1):
+            print("{}. {} ({})".format(number, profile["name"], profile["type"]))
+        choice = _prompt("Select profile number: ")
+        if not choice.isdigit() or not 1 <= int(choice) <= len(profiles):
+            raise ValueError("Invalid profile selection.")
+        profile = profiles[int(choice) - 1]
     values = _secret(profile)
     kind = profile["type"]
     headers, redact = {}, []

@@ -6,7 +6,8 @@
 
 ## Struttura del progetto
 
-- `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, controllo best-effort della release all'avvio, richiesta HTTP, stampa della risposta ed esportazione facoltativa.
+- `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, controllo best-effort della release all'avvio, richiesta HTTP, stampa della risposta ed esportazione facoltativa; mostra anche i profili auth salvati e accetta `--auth`, `--payload` e `--export`.
+- `history_store.py` — archivio per utente delle richieste HTTP riutilizzabili, con etichetta distinta dall'URL e deduplicazione per metodo e URL.
 - `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente.
 - `VERSION` — versione SemVer copiata nell'installazione.
 - `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
@@ -18,6 +19,8 @@ Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py
 ## TODO / prossimi step
 
 ### Completati
+- [x] Aggiunta history locale delle richieste HTTP con selezione per ID/URL, revisione dei campi e salvataggio automatico delle modifiche.
+- [x] Mostrare i profili auth all'avvio della sessione e supportare la selezione esplicita con `--auth NAME_OR_ID`.
 - [x] Aggiungere test d'integrazione online per GET, POST, PUT, PATCH e DELETE contro JSONPlaceholder.
 - [x] Correggere il controllo elevazione Windows in `main.py` impostando firme e tipi WinAPI per evitare WinError 6.
 - [x] Verificare e correggere il controllo amministratore in `main.py` usando il token Windows.

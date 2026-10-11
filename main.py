@@ -6,7 +6,8 @@ import json
 import os
 import re
 import shlex
-from auth_store import auth_command, select_auth_headers
+from auth_store import auth_command, list_auth_profiles, select_auth_headers
+from history_store import history_command, save_request
 from datetime import datetime
 from urllib.parse import urlsplit
 
@@ -116,7 +117,7 @@ def export_response(method, url, response_data, status_code, filename):
     """Write response metadata and body to a user-selected file safely."""
     filename = os.path.abspath(os.path.expanduser(filename))
     if os.path.exists(filename):
-        confirm = input("File already exists: {}. Overwrite? (y/n): ".format(filename)).strip().lower()
+        confirm = read_interactive("File already exists: {}. Overwrite? (y/n): ".format(filename)).strip().lower()
         if confirm != "y":
             print("Export cancelled; existing file was not changed.")
             return None
@@ -179,16 +180,20 @@ def read_interactive(prompt=""):
     return value
 
 
-def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=False):
+def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=False, history_id=None):
     """Run one request, or start an interactive command session without arguments."""
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv and auth_command(argv):
+        return
+    if argv and history_command(argv):
         return
     if not argv:
         print_logo()
         check_for_update_notice()
         check_admin()
-        print("Enter METHOD URL [--timeout SECONDS] [TRUE|FALSE], 'guided' for prompts, or 'exit' to quit.")
+        list_auth_profiles()
+        print("Enter METHOD [--auth NAME_OR_ID] URL [--export TRUE|FALSE], 'guided' for prompts, or 'exit' to quit.")
+        print("Example: GET --auth my-api https://api.example.com --export false")
         while True:
             try:
                 command = read_interactive("tpfireman> ").strip()
@@ -218,7 +223,9 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
                     argv = shlex.split(command, posix=False)
                 if argv and auth_command(argv):
                     continue
-                main(argv, show_banner=False, guided_payload=guided_payload, guided_payload_set=guided_payload_set)
+                if argv and history_command(argv):
+                    continue
+                main(argv, show_banner=False, guided_payload=guided_payload, guided_payload_set=guided_payload_set, history_id=history_id if command.casefold().startswith("history") else None)
             except QuitSession:
                 print("Exiting tpfireman session.")
                 return
@@ -237,13 +244,60 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         check_admin()
 
     if len(argv) < 2:
-        print(f"{YELLOW}Usage: tpfireman <METHOD> <URL> [--timeout SECONDS] [EXPORT:TRUE|FALSE]{RESET}")
+        print(f"{YELLOW}Usage: tpfireman <METHOD> <URL> [--auth NAME_OR_ID] [--export TRUE|FALSE] [--payload JSON] [--timeout SECONDS]{RESET}")
         print(f"Methods: GET, POST, PUT, DELETE, PATCH")
         print(f"Example: tpfireman POST https://api.example.com/data")
         return
 
     method = argv[0].strip().upper()
-    url = argv[1].strip()
+    profile_ref = None
+    cli_payload = None
+    cli_payload_set = False
+    export_mode = False
+    timeout_seconds = 10
+    request_args = argv[1:]
+    positional_args = []
+    while request_args:
+        item = request_args.pop(0)
+        if item == "--auth":
+            if not request_args or profile_ref is not None:
+                print(f"{RED}Error: --auth requires one profile name or ID and may be used once.{RESET}")
+                sys.exit(1)
+            profile_ref = request_args.pop(0)
+        elif item == "--payload":
+            if not request_args or cli_payload_set:
+                print(f"{RED}Error: --payload requires a JSON value and may be used once.{RESET}")
+                sys.exit(1)
+            try:
+                cli_payload = json.loads(request_args.pop(0))
+            except json.JSONDecodeError:
+                print(f"{RED}Error: --payload must contain valid JSON.{RESET}")
+                sys.exit(1)
+            cli_payload_set = True
+        elif item in ("--export", "--timeout"):
+            if not request_args:
+                print(f"{RED}Error: Option '{item}' requires a value.{RESET}")
+                sys.exit(1)
+            option_value = request_args.pop(0)
+            if item == "--export":
+                if option_value.upper() not in {"TRUE", "FALSE"}:
+                    print(f"{RED}Error: --export must be true or false.{RESET}")
+                    sys.exit(1)
+                export_mode = option_value.lower() == "true"
+            else:
+                try:
+                    timeout_seconds = float(option_value)
+                    if timeout_seconds <= 0 or not timeout_seconds < float("inf"):
+                        raise ValueError
+                except ValueError:
+                    print(f"{RED}Error: Timeout must be a positive number of seconds.{RESET}")
+                    sys.exit(1)
+        else:
+            positional_args.append(item)
+    if not positional_args:
+        print(f"{RED}Error: A request URL is required.{RESET}")
+        sys.exit(1)
+    url = positional_args.pop(0).strip()
 
     supported_methods = {"GET", "POST", "PUT", "DELETE", "PATCH"}
     if method not in supported_methods:
@@ -260,37 +314,15 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         print(f"{RED}Error: Invalid URL. Provide an absolute HTTP or HTTPS URL with a valid host and port.{RESET}")
         sys.exit(1)
 
-    # Parse optional flags separately from the method and URL, enforcing safe limits.
-    export_mode = False
-    timeout_seconds = 10
-    positional_args = argv[2:]
-    while positional_args and positional_args[0].startswith("--"):
-        option = positional_args.pop(0)
-        if option != "--timeout" or not positional_args:
-            print(f"{RED}Error: Unknown or incomplete option '{option}'. Use --timeout SECONDS.{RESET}")
-            sys.exit(1)
-        timeout_value = positional_args.pop(0)
-        try:
-            timeout_seconds = float(timeout_value)
-            if timeout_seconds <= 0 or not timeout_seconds < float("inf"):
-                raise ValueError
-        except ValueError:
-            print(f"{RED}Error: Timeout must be a positive number of seconds.{RESET}")
-            sys.exit(1)
-
     if positional_args:
-        export_arg = positional_args.pop(0).strip().upper()
-        if export_arg not in {"TRUE", "FALSE"}:
-            print(f"{RED}Error: Invalid export option '{export_arg}'. Use TRUE or FALSE.{RESET}")
-            sys.exit(1)
-        export_mode = export_arg == "TRUE"
-    if positional_args:
-        print(f"{RED}Error: Unexpected extra arguments. The JSON payload is entered interactively.{RESET}")
+        print(f"{RED}Error: Unexpected extra arguments. Use --export TRUE|FALSE and enter payload interactively.{RESET}")
         sys.exit(1)
 
+    # Keep the user-supplied URL separately; auth may add secret query parameters.
+    history_url = url
     # Select a stored authentication profile; secret values are never displayed.
     try:
-        request_headers, secrets_to_hide, authenticated_url = select_auth_headers(url)
+        request_headers, secrets_to_hide, authenticated_url = select_auth_headers(url, profile_ref)
         url = authenticated_url
     except Exception as exc:
         print(f"{RED}Authentication error: {type(exc).__name__}; details suppressed to protect credentials.{RESET}")
@@ -320,7 +352,9 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
     payload_methods = ["POST", "PUT", "PATCH"]
     
     # If no payload is provided via command line and it is a method that supports it
-    if guided_payload_set:
+    if cli_payload_set:
+        payload = cli_payload
+    elif guided_payload_set:
         payload = json.loads(guided_payload) if guided_payload else None
     elif method in payload_methods and len(argv) == 2:
         ans = read_interactive(f"{YELLOW}Do you want to provide a JSON payload? (y/n): {RESET}").lower()
@@ -369,6 +403,10 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         print_http_response(status_code, response_headers, raw_data, secrets_to_hide)
         if status_code >= 400:
             sys.exit(1)
+
+        # Persist successful request configuration for reuse; omit auth query modifications.
+        saved_request = save_request(method, history_url, payload, export_mode, history_id)
+        history_id = saved_request["id"]
 
         # Export if requested
         if export_mode:
