@@ -1,92 +1,137 @@
-# tpfireman - API Testing Client
+<div align="center">
 
-A lightweight, terminal-based API testing client for Windows.
+# 🔥 tpfireman
 
-## Features
-- Support for common HTTP methods: GET, POST, PUT, DELETE, PATCH.
-- Interactive JSON payload input for body-supported methods.
-- Automatic Content-Type: application/json header handling.
-- Response body pretty-printing (if JSON).
-- Export response to a file with one flag.
-- ANSI color support for better visibility.
-- HTTPS support via Python's standard TLS handling in `urllib`.
-- Reusable authentication profiles stored under `%LOCALAPPDATA%\\tpfireman\\auth_profiles.json`, with secrets encrypted by Windows DPAPI.
-- Authentication types: Bearer, Basic, API key (header or query), OAuth2 Client Credentials, and OAuth2 Authorization Code with PKCE.
-- Profile management: `tpfireman auth add|list|edit|rename|delete`; use `tpfireman auth delete --all` for confirmed bulk deletion. Values are never listed or echoed.
+### Your no-frills HTTP client for the terminal.
 
-## Installation
+Send API requests, manage authentication, and inspect responses directly from Windows.
 
-To install tpfireman, you need to have [Python](https://www.python.org/downloads/) installed on your system. The updater uses the GitHub Releases API at `https://github.com/FoxEaterIT/tpfireman`.
+[![Windows](https://img.shields.io/badge/Windows-10%2B-0078D4?logo=windows&logoColor=white)](#installation)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?logo=python&logoColor=white)](#installation)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-2ea44f)](#)
+[![License](https://img.shields.io/badge/license-MIT-8b5cf6)](LICENSE)
 
-1. Ensure Python 3.8 or newer is installed and available as `python` on PATH.
-2. Open a **standard, non-elevated** PowerShell terminal in the directory containing the downloaded application files.
-3. Run the installation script:
-   ```powershell
-   .\install.ps1
-   ```
-4. The installer copies the app to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%LOCALAPPDATA%\tpfireman` for user data, and adds the installed `bin` directory to the current user's PATH. No administrator privileges or third-party packages are required.
-5. Restart your terminal to apply the PATH changes.
+</div>
 
-## Usage
+---
 
-Once installed, you can use the `tpfireman` command from anywhere in your terminal. `tpfireman version` displays the installed version, `tpfireman update` checks GitHub Releases and installs a newer release when available, and `tpfireman uninstall` starts the confirmed per-user uninstaller. The uninstaller removes the application, its exact PATH entry, and all tpfireman user data (including auth profiles).
+## ⚡ At a glance
 
-The version is maintained in the root `VERSION` file (currently `0.1.0`) and copied during installation. Uninstallation removes the application, its PATH entry, and all tpfireman user data, including saved authentication profiles; this cannot be undone. Automatic updates check the latest GitHub Release at `FoxEaterIT/tpfireman` and expect a `tpfireman-source.zip` asset containing the application files and a matching `VERSION` file. Publish releases with tags such as `v1.2.3` and attach that ZIP asset; the updater asks for confirmation and preserves existing user data.
+`tpfireman` is a lightweight, interactive command-line client for testing HTTP APIs. It uses Python's standard library, so there are no third-party packages to install.
 
-### Basic Syntax
+```text
+GET  → read data         POST   → create resources
+PUT  → replace           PATCH  → modify
+DELETE → remove
+```
+
+## ✨ Features
+
+| | Feature |
+|:--|:--|
+| 🚀 | `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` requests |
+| 🧩 | Interactive JSON payload input and automatic `Content-Type` handling |
+| 🎨 | Pretty-printed JSON responses and colorized terminal output |
+| 📦 | Export responses to a file, with confirmation before overwriting |
+| 🔐 | Custom headers and reusable authentication profiles |
+| 🛡️ | Secrets encrypted with Windows DPAPI; sensitive values are never displayed |
+| 🔑 | Bearer, Basic, API key, and OAuth2 (Client Credentials / Authorization Code with PKCE) |
+| ⏱️ | Configurable timeouts and consistent display of HTTP error responses |
+
+## 📥 Installation
+
+### Requirements
+
+- Windows and Python **3.8 or newer**, available as `python` on `PATH`.
+- A **non-elevated** PowerShell session.
+
+### Install
+
+Open PowerShell in the application files directory and run:
+
+```powershell
+.\install.ps1
+```
+
+The installer copies the app to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%LOCALAPPDATA%\tpfireman` for user data, and adds the command to your user `PATH`. No administrator privileges or additional Python dependencies are required. Restart your terminal when installation is complete.
+
+## 🚦 Quick start
+
+```powershell
+# Send a GET request
+tpfireman GET https://jsonplaceholder.typicode.com/posts/1
+
+# Send a POST request; the client will ask whether you want to enter a JSON payload
+tpfireman POST https://jsonplaceholder.typicode.com/posts
+
+# Set a 30-second timeout
+tpfireman GET https://example.com --timeout 30
+
+# Export the response (you will be prompted for a file path)
+tpfireman GET https://jsonplaceholder.typicode.com/posts/1 EXPORT:TRUE
+```
+
+> [!TIP]
+> For `POST`, `PUT`, and `PATCH`, you can enter JSON interactively. Payloads are not accepted as command-line arguments. You can also add custom headers interactively; their values are entered without being displayed.
+
+### Syntax
+
 ```text
 tpfireman <METHOD> <URL> [--timeout SECONDS] [EXPORT:TRUE|FALSE]
 ```
 
-For `POST`, `PUT`, and `PATCH`, when no export argument is supplied, the client asks whether you want to enter a JSON payload interactively. Payloads are not currently accepted as command-line arguments. For each HTTP request, the client asks whether to use a saved authentication profile. Custom one-off headers can also be entered interactively with hidden values.
+### Authentication profiles
 
-### Examples
+Manage reusable profiles without exposing secrets in the terminal:
 
-**Simple GET request:**
 ```text
-tpfireman GET https://jsonplaceholder.typicode.com/posts/1
+tpfireman auth add
+tpfireman auth list
+tpfireman auth edit
+tpfireman auth rename
+tpfireman auth delete
 ```
 
-**POST request with interactive payload:**
+Delete all profiles with `tpfireman auth delete --all` (confirmation required). Profile data is stored in `%LOCALAPPDATA%\tpfireman\auth_profiles.json`; secrets are protected with Windows DPAPI.
+
+## 📤 Responses and exports
+
+The client displays the status code, headers, and response body, including for HTTP errors. JSON bodies are formatted for readability; non-JSON text remains readable as-is. Use `EXPORT:TRUE` to choose where to save a response. If the file already exists, tpfireman asks before overwriting it. Press Enter to use `api_response.txt` in the current directory.
+
+## 🔄 Version, updates, and uninstall
+
 ```text
-tpfireman POST https://jsonplaceholder.typicode.com/posts
-```
-- The script will ask if you want to provide a JSON payload.
-- Type y to enter the JSON string.
-
-**PUT request with interactive payload:**
-```text
-tpfireman PUT https://jsonplaceholder.typicode.com/posts/1
+tpfireman version
+tpfireman update
+tpfireman uninstall
 ```
 
-**Exporting a response:**
-```text
-tpfireman GET https://jsonplaceholder.typicode.com/posts/1 EXPORT:TRUE
+Updates check [FoxEaterIT/tpfireman GitHub Releases](https://github.com/FoxEaterIT/tpfireman), ask for confirmation, and preserve user data. Uninstallation requires confirmation and removes the application, its exact `PATH` entry, and all user data, including authentication profiles. **Removing user data cannot be undone.**
+
+> [!NOTE]
+> To publish a release, use a SemVer tag (for example, `v1.2.3`) and attach `tpfireman-source.zip` containing the application files and a matching `VERSION` file.
+
+## 🧪 Tests
+
+Run the installation, wrapper, and authentication checks with:
+
+```powershell
+python -m unittest tests.test_installation -v
+python -m unittest tests.test_auth_store tests.test_export tests.test_http_response -v
 ```
-- The client asks for an export path; press Enter to use `api_response.txt` in the current directory. If the target already exists, it asks before overwriting it.
 
-## Integration Tests
-
-The integration tests send live requests to JSONPlaceholder and require an internet connection:
+Integration tests send live requests to JSONPlaceholder and require an internet connection:
 
 ```powershell
 python -m unittest discover -s tests -v
 ```
 
-JSONPlaceholder simulates write operations; changes made by `POST`, `PUT`, `PATCH`, and `DELETE` are not persisted. The tests cover `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`.
+JSONPlaceholder simulates write operations; changes sent with `POST`, `PUT`, `PATCH`, and `DELETE` are not persisted. The Windows token check and wrapper smoke test are only available on Windows. To verify the standard-user scenario, run the tests from a non-elevated session.
 
-## Error Handling
-- If an invalid JSON is provided during interactive input, the script will notify you and exit.
-- HTTP responses, including errors, display status code, headers, and body. HTTP error responses exit with a non-zero code.
-- Request timeout defaults to 10 seconds; set it with `--timeout SECONDS`, for example `tpfireman GET https://example.com --timeout 30`.
-- The script will warn you if it's being run as Administrator, as it's designed for standard user sessions.
+---
 
-## Installation and wrapper checks
+<div align="center">
 
-The installer rejects elevated sessions, checks for the launcher and application modules plus Python 3.8+, copies the app into the current user's Local AppData, prepares its user-data folder, and updates only the current user's PATH. GitHub Releases must use a SemVer tag such as `v1.2.3` and include `tpfireman-source.zip` with `main.py`, `auth_store.py`, `VERSION`, `README.md`, `uninstall.ps1`, `update.ps1`, and `bin/tpfireman.bat` at the archive root (or one directory below it). To run the installation and wrapper verification tests:
+**🔥 Small client. Your requests, under control.**
 
-```powershell
-python -m unittest tests.test_installation -v
-```
-
-The Windows-only wrapper smoke test and token elevation check are skipped on non-Windows systems. To verify the non-administrator scenario, run the tests from a standard (non-elevated) Windows terminal.
+</div>

@@ -14,12 +14,14 @@ AUTH_TYPES = ("Bearer", "Basic", "API key", "OAuth2 Client Credentials", "OAuth2
 
 
 def _crypt(value, decrypt=False):
+    """Protect or unprotect UTF-8 secrets with DPAPI for the current Windows user."""
     if sys.platform != "win32":
         raise RuntimeError("Authentication secrets require Windows DPAPI.")
 
     class DATA_BLOB(ctypes.Structure):
         _fields_ = [("cbData", wintypes.DWORD), ("pbData", ctypes.POINTER(ctypes.c_byte))]
 
+    # DPAPI returns allocated memory; retain the input buffer for the full native call.
     raw = value if decrypt else value.encode("utf-8")
     source_buffer = ctypes.create_string_buffer(raw)
     source = DATA_BLOB(len(raw), ctypes.cast(source_buffer, ctypes.POINTER(ctypes.c_byte)))
@@ -39,6 +41,7 @@ def _crypt(value, decrypt=False):
     if not ok:
         raise RuntimeError("Windows DPAPI operation failed; verify the current Windows account and profile.")
     try:
+        # Store encrypted bytes as base64 text; always release DPAPI's output buffer.
         output = ctypes.string_at(result.pbData, result.cbData)
         return output if decrypt else base64.b64encode(output).decode("ascii")
     finally:
@@ -46,6 +49,7 @@ def _crypt(value, decrypt=False):
 
 
 def _read():
+    """Load the profile list, treating a missing store as an empty collection."""
     try:
         with open(STORE_PATH, "r", encoding="utf-8") as stream:
             data = json.load(stream)
@@ -59,7 +63,9 @@ def _read():
 
 
 def _write(profiles):
+    """Persist profiles through an atomic replacement to avoid partial JSON files."""
     os.makedirs(APP_DIR, exist_ok=True)
+    # Create the temporary file beside the target so replacement stays on one volume.
     fd, temp = tempfile.mkstemp(prefix="auth_profiles_", suffix=".tmp", dir=APP_DIR)
     with os.fdopen(fd, "w", encoding="utf-8") as stream:
         json.dump(profiles, stream, ensure_ascii=False, indent=2)
@@ -73,14 +79,17 @@ def _write(profiles):
 
 
 def _secret(profile):
+    """Decode a profile's encrypted secret payload into its field dictionary."""
     return json.loads(_crypt(base64.b64decode(profile["secret"]), decrypt=True).decode("utf-8"))
 
 
 def _save_secret(profile, values):
+    """Serialize profile fields and encrypt them before adding them to the store."""
     profile["secret"] = _crypt(json.dumps(values, ensure_ascii=False))
 
 
 def _prompt(label, hidden=False, allow_empty=False):
+    """Prompt for required or optional input, hiding values when requested."""
     import getpass
     while True:
         value = (getpass.getpass if hidden else input)(label).strip()
@@ -90,6 +99,7 @@ def _prompt(label, hidden=False, allow_empty=False):
 
 
 def _collect(kind, existing=None):
+    """Collect and validate the fields required by an authentication profile type."""
     old = existing or {}
     values = {}
     def ask(key, label, secret=False, optional=False):
@@ -123,6 +133,7 @@ def _collect(kind, existing=None):
         ask("scope", "Scope (optional)", optional=True)
         ask("header", "Token header (default Authorization)", optional=True)
         ask("prefix", "Token prefix (default Bearer)", optional=True)
+    # Require HTTPS for OAuth endpoints; permit HTTP only for a loopback PKCE callback.
     for field in ("token_url", "authorization_url", "redirect_uri"):
         if field in values:
             parsed = urllib.parse.urlsplit(values[field])
@@ -136,6 +147,7 @@ def _collect(kind, existing=None):
 
 
 def _profile_by(ref, profiles):
+    """Resolve a profile by exact ID or case-insensitive name, requiring one match."""
     matches = [p for p in profiles if p["id"] == ref or p["name"].casefold() == ref.casefold()]
     if len(matches) != 1:
         raise ValueError("No unique profile matches that name or ID.")
@@ -227,6 +239,7 @@ def auth_command(args):
 
 
 def _oauth_token(values, code_flow=False):
+    """Obtain an access token with client credentials or the PKCE authorization flow."""
     import hashlib
     import secrets
     import threading
@@ -246,10 +259,12 @@ def _oauth_token(values, code_flow=False):
     if parsed.username or parsed.password or parsed.query or parsed.fragment:
         raise ValueError("PKCE redirect URI cannot include credentials, query parameters, or fragments.")
     port = parsed.port or 80
+    # PKCE binds the authorization code to this client; state protects against CSRF.
     verifier = secrets.token_urlsafe(64)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     state = secrets.token_urlsafe(24)
     result = {}
+    # Accept one local redirect callback and validate its path and state parameter.
     class CallbackHTTPServer(HTTPServer):
         allow_reuse_address = True
     class Handler(BaseHTTPRequestHandler):
@@ -266,6 +281,7 @@ def _oauth_token(values, code_flow=False):
                 result["error"] = query.get("error", [None])[0]
             self.send_response(200); self.end_headers(); self.wfile.write(b"Authentication received. You may close this browser tab.")
         def log_message(self, *args):
+            # Avoid writing callback URLs, which may contain sensitive authorization data.
             pass
     callback_path = parsed.path or "/"
     server = CallbackHTTPServer((parsed.hostname, port), Handler)
@@ -284,6 +300,7 @@ def _oauth_token(values, code_flow=False):
 
 
 def select_auth_headers(url):
+    """Apply a selected profile and return headers, redaction values, and request URL."""
     profiles = _read()
     if not profiles or input("Use a saved authentication profile? (y/n): ").strip().lower() != "y":
         return {}, [], url

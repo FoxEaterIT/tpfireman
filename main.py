@@ -18,6 +18,7 @@ YELLOW = "\033[93m"
 CYAN = "\033[96m"
 
 def print_logo():
+    """Display the application's terminal banner and brief help hint."""
     print(f"{CYAN}")
     print(r"""
     _______  _____  __  __  _   _  _____  _   _  _   _  _____  _   _  
@@ -30,6 +31,7 @@ def print_logo():
     print(f'{CYAN}Type "help" for usage instructions.{RESET}\n')
 
 def check_admin():
+    """Exit when running elevated on Windows; allow other platforms unchanged."""
     # Check whether this process has an elevated Windows token.
     if sys.platform != "win32":
         return
@@ -38,6 +40,7 @@ def check_admin():
         import ctypes
         from ctypes import wintypes
 
+        # Request read access to the process token and query its elevation status.
         TOKEN_QUERY = 0x0008
         TOKEN_ELEVATION_CLASS = 20
 
@@ -86,6 +89,7 @@ def check_admin():
         sys.exit(1)
 
 def export_response(method, url, response_data, status_code, filename):
+    """Write response metadata and body to a user-selected file safely."""
     filename = os.path.abspath(os.path.expanduser(filename))
     if os.path.exists(filename):
         confirm = input("File already exists: {}. Overwrite? (y/n): ".format(filename)).strip().lower()
@@ -118,12 +122,14 @@ def export_response(method, url, response_data, status_code, filename):
     return filename
 
 def redact_text(text, secrets_to_hide):
+    """Replace known credential values before displaying or exporting text."""
     for secret in sorted((value for value in secrets_to_hide if value), key=len, reverse=True):
         text = text.replace(secret, "[REDACTED]")
     return text
 
 
 def print_http_response(status_code, headers, raw_data, secrets_to_hide):
+    """Print a formatted response while redacting known authentication secrets."""
     color = RED if status_code >= 400 else WHITE
     print("{}Status Code: {}{}".format(color, status_code, RESET))
     print("{}Headers:{}".format(WHITE, RESET))
@@ -138,6 +144,7 @@ def print_http_response(status_code, headers, raw_data, secrets_to_hide):
 
 
 def main():
+    """Parse CLI input, build and send one HTTP request, then handle its response."""
     if auth_command(sys.argv[1:]):
         return
     print_logo()
@@ -167,6 +174,7 @@ def main():
         print(f"{RED}Error: Invalid URL. Provide an absolute HTTP or HTTPS URL with a valid host and port.{RESET}")
         sys.exit(1)
 
+    # Parse optional flags separately from the method and URL, enforcing safe limits.
     export_mode = False
     timeout_seconds = 10
     positional_args = sys.argv[3:]
@@ -244,6 +252,7 @@ def main():
         req.add_header("User-Agent", "API-Testing-Client")
         for header_name, header_value in request_headers.items():
             req.add_header(header_name, header_value)
+        # Attach a JSON body only when the user supplied a non-empty payload.
         if payload:
             req.data = json.dumps(payload).encode("utf-8")
             req.add_header("Content-Type", "application/json")
