@@ -10,7 +10,7 @@
 - `history_store.py` — archivio per utente delle richieste HTTP riutilizzabili, con etichetta distinta dall'URL e deduplicazione per metodo e URL.
 - `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente; installer e updater devono distribuire tutti i moduli Python, incluso `history_store.py`.
 - `VERSION` — versione SemVer copiata nell'installazione.
-- `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
+- `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, ripara anche moduli mancanti reinstallando la release corrente, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
 - `bin/tpfireman.bat` — wrapper che gestisce `version`, `update`, `uninstall` e inoltra gli altri argomenti a `main.py`.
 - `README.md` — documentazione d'uso e installazione.
 
