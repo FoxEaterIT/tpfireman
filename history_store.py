@@ -64,15 +64,48 @@ def resolve_request(reference, requests=None):
     return matches[0]
 
 
+def _delete_requests(references, requests):
+    """Delete selected request entries after resolving every reference uniquely."""
+    resolved = []
+    for reference in references:
+        item = resolve_request(reference, requests)
+        if item not in resolved:
+            resolved.append(item)
+    if not resolved:
+        raise ValueError("Provide at least one history ID or label to delete.")
+    import main
+    confirm = main.read_interactive("Delete {} history entr{}? (y/n): ".format(len(resolved), "y" if len(resolved) == 1 else "ies")).strip().lower()
+    if confirm != "y":
+        print("Cancelled.")
+        return
+    for item in resolved:
+        requests.remove(item)
+    _write(requests)
+    print("History entr{} deleted.".format("y" if len(resolved) == 1 else "ies"))
+
+
 def history_command(args):
-    """Handle the history command and execute a selected saved request."""
+    """Handle history management commands and run selected saved requests."""
     if not args or args[0].casefold() != "history":
         return False
     try:
         requests = _read()
+        if len(args) > 1 and args[1].casefold() == "edit":
+            if len(args) != 3:
+                raise ValueError("Usage: tpfireman history edit <id-or-label-or-url>")
+            selected = resolve_request(args[2], requests)
+            _review_and_run(selected, run_request=False)
+            return True
+        if len(args) > 1 and args[1].casefold() in {"delete", "remove"}:
+            refs = args[2:]
+            if not refs:
+                raise ValueError("Usage: tpfireman history delete <id-or-label> [id-or-label ...]")
+            _delete_requests(refs, requests)
+            return True
         if len(args) > 1:
             if args[1].casefold() in {"list", "show"}:
-                pass
+                if len(args) != 2:
+                    raise ValueError("Usage: tpfireman history list")
             else:
                 selected = resolve_request(args[1], requests)
                 _review_and_run(selected)
@@ -96,8 +129,8 @@ def history_command(args):
     return True
 
 
-def _review_and_run(item):
-    """Prompt to review saved request fields, save changes, and invoke main."""
+def _review_and_run(item, run_request=True):
+    """Prompt to review saved request fields, save changes, and optionally invoke main."""
     import main
     method = main.read_interactive("Method [{}]: ".format(item["method"])).strip() or item["method"]
     url = main.read_interactive("URL [{}]: ".format(item["url"])).strip() or item["url"]
@@ -125,6 +158,9 @@ def _review_and_run(item):
     if export not in {"y", "n"}:
         raise ValueError("Export choice must be y or n.")
     updated = save_request(method.upper(), url, payload, export == "y", item["id"], label=label)
-    main.main([updated["method"], updated["url"], "TRUE" if updated["export"] else "FALSE"], show_banner=False,
-              guided_payload=json.dumps(updated["payload"], ensure_ascii=False) if updated["payload"] is not None else None,
-              guided_payload_set=updated["payload"] is not None, history_id=updated["id"])
+    if run_request:
+        main.main([updated["method"], updated["url"], "TRUE" if updated["export"] else "FALSE"], show_banner=False,
+                  guided_payload=json.dumps(updated["payload"], ensure_ascii=False) if updated["payload"] is not None else None,
+                  guided_payload_set=updated["payload"] is not None, history_id=updated["id"])
+    else:
+        print("History entry updated.")

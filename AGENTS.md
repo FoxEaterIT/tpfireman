@@ -20,6 +20,7 @@ Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py
 
 ### Completati
 - [x] Aggiunta history locale delle richieste HTTP con selezione per ID/URL, revisione dei campi e salvataggio automatico delle modifiche.
+- [x] Aggiunti `history edit` per ID/label/URL e `history delete` per una o più voci tramite ID/label, con conferma.
 - [x] Mostrare i profili auth all'avvio della sessione e supportare la selezione esplicita con `--auth NAME_OR_ID`.
 - [x] Aggiungere test d'integrazione online per GET, POST, PUT, PATCH e DELETE contro JSONPlaceholder.
 - [x] Correggere il controllo elevazione Windows in `main.py` impostando firme e tipi WinAPI per evitare WinError 6.
