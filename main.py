@@ -262,7 +262,17 @@ def main():
     if method in payload_methods and len(sys.argv) == 3:
         ans = input(f"{YELLOW}Do you want to provide a JSON payload? (y/n): {RESET}").lower()
         if ans == "y":
-            payload_str = input(f"{YELLOW}Paste your JSON payload here: {RESET}")
+            print(f"{YELLOW}Paste your JSON payload here. Finish by entering an empty line:{RESET}")
+            payload_lines = []
+            while True:
+                try:
+                    line = input()
+                except EOFError:
+                    break
+                if not line:
+                    break
+                payload_lines.append(line)
+            payload_str = " ".join(payload_lines)
             try:
                 payload = json.loads(payload_str)
             except json.JSONDecodeError:
