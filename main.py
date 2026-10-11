@@ -4,7 +4,6 @@ import urllib.request
 import urllib.parse
 import json
 import os
-import getpass
 import re
 import shlex
 from auth_store import auth_command, select_auth_headers
@@ -168,6 +167,18 @@ def print_http_response(status_code, headers, raw_data, secrets_to_hide):
     print(redact_text(body, secrets_to_hide))
 
 
+class QuitSession(Exception):
+    """Signal that the user requested to leave the interactive session."""
+
+
+def read_interactive(prompt=""):
+    """Read input and exit the session only when the entire answer is exit or quit."""
+    value = input(prompt)
+    if value.strip().casefold() in {"exit", "quit"}:
+        raise QuitSession()
+    return value
+
+
 def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=False):
     """Run one request, or start an interactive command session without arguments."""
     argv = list(sys.argv[1:] if argv is None else argv)
@@ -180,51 +191,46 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         print("Enter METHOD URL [--timeout SECONDS] [TRUE|FALSE], 'guided' for prompts, or 'exit' to quit.")
         while True:
             try:
-                command = input("tpfireman> ").strip()
-            except (EOFError, KeyboardInterrupt):
-                print()
-                return
-            if not command:
-                continue
-            if command.lower() in {"exit", "quit"}:
-                return
-            guided_payload = None
-            guided_payload_set = False
-            if command.lower() == "guided":
-                method_input = input("Method: ").strip()
-                url_input = input("URL: ").strip()
-                argv = [method_input, url_input]
-                if method_input.upper() in {"POST", "PUT", "PATCH"}:
-                    if input("Provide a JSON payload? (y/n): ").strip().lower() == "y":
-                        print("Paste JSON; finish with an empty line:")
-                        lines = []
-                        while True:
-                            line = input()
-                            if not line:
-                                break
-                            lines.append(line)
-                        guided_payload = " ".join(lines)
-                        try:
-                            json.loads(guided_payload)
-                        except json.JSONDecodeError:
-                            print("Invalid JSON provided.")
-                            continue
-                        guided_payload_set = True
-                export_input = input("Export response? (y/n): ").strip().lower()
-                argv.append("TRUE" if export_input == "y" else "FALSE")
-            else:
-                try:
-                    argv = shlex.split(command, posix=False)
-                except ValueError as exc:
-                    print("Invalid command: {}".format(exc))
+                command = read_interactive("tpfireman> ").strip()
+                if not command:
                     continue
-            try:
+                guided_payload = None
+                guided_payload_set = False
+                if command.casefold() == "guided":
+                    method_input = read_interactive("Method: ").strip()
+                    url_input = read_interactive("URL: ").strip()
+                    argv = [method_input, url_input]
+                    if method_input.upper() in {"POST", "PUT", "PATCH"}:
+                        if read_interactive("Provide a JSON payload? (y/n): ").strip().lower() == "y":
+                            print("Paste JSON; finish with an empty line:")
+                            lines = []
+                            while True:
+                                line = read_interactive()
+                                if not line:
+                                    break
+                                lines.append(line)
+                            guided_payload = " ".join(lines)
+                            json.loads(guided_payload)
+                            guided_payload_set = True
+                    export_input = read_interactive("Export response? (y/n): ").strip().lower()
+                    argv.append("TRUE" if export_input == "y" else "FALSE")
+                else:
+                    argv = shlex.split(command, posix=False)
                 if argv and auth_command(argv):
                     continue
                 main(argv, show_banner=False, guided_payload=guided_payload, guided_payload_set=guided_payload_set)
+            except QuitSession:
+                print("Exiting tpfireman session.")
+                return
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return
+            except json.JSONDecodeError:
+                print("Invalid JSON provided.")
+            except ValueError as exc:
+                print("Invalid command: {}".format(exc))
             except SystemExit:
                 pass
-
     if show_banner:
         print_logo()
         check_for_update_notice()
@@ -291,12 +297,12 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         sys.exit(1)
 
     # Headers are entered interactively so credentials are not exposed in command history.
-    while input(f"{YELLOW}Add a custom HTTP header? (y/n): {RESET}").strip().lower() == "y":
-        name = input(f"{YELLOW}Header name: {RESET}").strip()
+    while read_interactive(f"{YELLOW}Add a custom HTTP header? (y/n): {RESET}").strip().lower() == "y":
+        name = read_interactive(f"{YELLOW}Header name: {RESET}").strip()
         if not re.fullmatch(r"[!#$%&'*+.^_`|~0-9A-Za-z-]+", name):
             print(f"{RED}Error: Invalid HTTP header name.{RESET}")
             sys.exit(1)
-        value = getpass.getpass(f"{YELLOW}Header value (hidden; use for Authorization credentials): {RESET}")
+        value = read_interactive(f"{YELLOW}Header value (hidden; use for Authorization credentials): {RESET}")
         if any(char in value for char in "\\r\\n"):
             print(f"{RED}Error: Header values cannot contain line breaks.{RESET}")
             sys.exit(1)
@@ -317,13 +323,13 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
     if guided_payload_set:
         payload = json.loads(guided_payload) if guided_payload else None
     elif method in payload_methods and len(argv) == 2:
-        ans = input(f"{YELLOW}Do you want to provide a JSON payload? (y/n): {RESET}").lower()
+        ans = read_interactive(f"{YELLOW}Do you want to provide a JSON payload? (y/n): {RESET}").lower()
         if ans == "y":
             print(f"{YELLOW}Paste your JSON payload here. Finish by entering an empty line:{RESET}")
             payload_lines = []
             while True:
                 try:
-                    line = input()
+                    line = read_interactive()
                 except EOFError:
                     break
                 if not line:
@@ -366,7 +372,7 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
 
         # Export if requested
         if export_mode:
-            export_path = input("Export file path (default: api_response.txt): ").strip()
+            export_path = read_interactive("Export file path (default: api_response.txt): ").strip()
             if not export_path:
                 export_path = "api_response.txt"
             response_path = export_response(
