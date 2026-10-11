@@ -4,3 +4,4 @@ __pycache__/
 venv/
 .env
 release.ps1
+tpfireman-source.zip
