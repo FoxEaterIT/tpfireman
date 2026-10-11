@@ -50,7 +50,7 @@ if (-not $asset -or -not $asset.browser_download_url) {
 }
 
 $confirmation = Read-Host "Install tpfireman $latestVersion? Existing auth profiles and user data will be preserved. Type YES to continue"
-if ($confirmation -cne "YES") {
+if ($confirmation -notin @("YES", "yes", "Y", "y")) {
     Write-Host "Update cancelled." -ForegroundColor Yellow
     exit 0
 }

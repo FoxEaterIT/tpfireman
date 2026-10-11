@@ -29,6 +29,31 @@ def print_logo():
      """)
     print(f"{WHITE}  --- API Testing Client ---{RESET}")
 
+def check_for_update_notice():
+    """Check GitHub Releases and suggest the explicit update command when newer."""
+    import urllib.error
+
+    version_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION")
+    try:
+        with open(version_path, "r", encoding="utf-8") as version_file:
+            current = version_file.read().strip()
+        if not re.fullmatch(r"\d+\.\d+\.\d+", current):
+            return
+        request = urllib.request.Request(
+            "https://api.github.com/repos/FoxEaterIT/tpfireman/releases/latest",
+            headers={"User-Agent": "tpfireman-version-check", "Accept": "application/vnd.github+json"},
+        )
+        with urllib.request.urlopen(request, timeout=2) as response:
+            release = json.loads(response.read().decode("utf-8"))
+        latest = release.get("tag_name", "").lstrip("vV")
+        if re.fullmatch(r"\d+\.\d+\.\d+", latest):
+            if tuple(map(int, latest.split("."))) > tuple(map(int, current.split("."))):
+                print(f"{YELLOW}A newer tpfireman version is available ({latest}; installed: {current}). Run 'tpfireman update' to install it.{RESET}")
+    except (OSError, urllib.error.URLError, ValueError, KeyError, TypeError):
+        # Version checks are best-effort and must never prevent an HTTP request.
+        return
+
+
 def check_admin():
     """Exit when running elevated on Windows; allow other platforms unchanged."""
     # Check whether this process has an elevated Windows token.
@@ -147,6 +172,7 @@ def main():
     if auth_command(sys.argv[1:]):
         return
     print_logo()
+    check_for_update_notice()
     check_admin()
 
     if len(sys.argv) < 3:
