@@ -117,13 +117,12 @@ def history_command(args):
             label = item.get("label", item.get("name", item["url"]))
             shown_label = "" if label == item["url"] else "  [{}]".format(label)
             print("{}  {}  {}{}  export={}".format(item["id"], item["method"], item["url"], shown_label, str(item.get("export", False)).lower()))
-        if len(args) > 1:
-            return True
-        import main
-        reference = main.read_interactive("Select request by ID or URL/name (or leave blank to cancel): ").strip()
-        if not reference:
-            return True
-        _review_and_run(resolve_request(reference, requests))
+        print("History commands:")
+        print("  tpfireman history <id|label|url>                 Review and run a saved request")
+        print("  tpfireman history edit <id|label|url>            Edit a request without running it")
+        print("  tpfireman history delete <id|label> [<...>]      Delete one or more requests")
+        print("  tpfireman history list                          Show this list")
+        return True
     except (ValueError, RuntimeError, OSError, KeyError) as exc:
         print("History error: {}".format(exc))
     return True

@@ -94,13 +94,14 @@ tpfireman <METHOD> <URL> [--timeout SECONDS] [EXPORT:TRUE|FALSE]
 
 ### Request history
 
-Requests that complete successfully are saved locally with their method, URL, optional JSON payload, and export setting. At session startup, saved authentication profiles are listed by ID, name, and type (never secret values). Specify one directly with `--auth NAME_OR_ID`, for example `GET --auth my-api https://api.example.com --export false`; optional payloads can be passed as `--payload '{\"key\":\"value\"}'`. Entries store URL and label separately, are deduplicated by method and URL, and are updated when reused. A new entry defaults to its URL as the label; the history list hides that redundant label. When reviewing an entry, change its label or enter `=` to reset the label to the current URL. Entries can be selected by ID, label, or URL. From the interactive session, enter `history` to list and select an entry by ID or URL, or run `tpfireman history <id-or-url>`. Edit an entry without sending it using `tpfireman history edit <id-or-label-or-url>`; delete one or more entries by ID or label with `tpfireman history delete <id-or-label> [id-or-label ...]` (confirmation required). Review the saved fields before sending; press Enter to keep each value, and type `-` to clear a payload. Multiline JSON ends with an empty line. Changes are saved automatically.
+Requests that complete successfully are saved locally with their method, URL, optional JSON payload, and export setting. At session startup, saved authentication profiles are listed by ID, name, and type (never secret values). Specify one directly with `--auth NAME_OR_ID`, for example `GET --auth my-api https://api.example.com --export false`; optional payloads can be passed as `--payload '{\"key\":\"value\"}'`. Entries store URL and label separately, are deduplicated by method and URL, and are updated when reused. A new entry defaults to its URL as the label; the history list hides that redundant label. When reviewing an entry, change its label or enter `=` to reset the label to the current URL. Entries can be selected by ID, label, or URL. From the interactive session, enter `history` to list entries and show the available commands without prompting for a selection. Choose an entry explicitly with `tpfireman history <id-or-label-or-url>`. Edit an entry without sending it using `tpfireman history edit <id-or-label-or-url>`; delete one or more entries by ID or label with `tpfireman history delete <id-or-label> [id-or-label ...]` (confirmation required). Review the saved fields before sending; press Enter to keep each value, and type `-` to clear a payload. Multiline JSON ends with an empty line. Changes are saved automatically.
 
 ### Authentication profiles
 
 Manage reusable profiles without exposing secrets in the terminal:
 
 ```text
+tpfireman auth
 tpfireman auth add
 tpfireman auth list
 tpfireman auth edit
@@ -110,7 +111,7 @@ tpfireman auth delete
 
 Request profiles are stored in `%LOCALAPPDATA%\tpfireman\auth_profiles.json`; secrets are protected with Windows DPAPI. Request history is stored separately in `%LOCALAPPDATA%\tpfireman\request_history.json`.
 
-Delete all profiles with `tpfireman auth delete --all` (confirmation required).
+`tpfireman auth` (or `tpfireman auth list`) displays saved profiles and the available auth commands; it does not prompt for a selection. Delete all profiles with `tpfireman auth delete --all` (confirmation required).
 
 ## 📤 Responses and exports
 

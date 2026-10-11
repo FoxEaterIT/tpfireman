@@ -156,13 +156,19 @@ def _profile_by(ref, profiles):
 
 def auth_command(args):
     """Run auth profile management commands. Return True if handled."""
-    if len(args) < 2 or args[0].lower() != "auth":
+    if not args or args[0].lower() != "auth":
         return False
-    command = args[1].lower()
+    command = args[1].lower() if len(args) > 1 else "list"
     try:
         profiles = _read()
         if command == "list":
             list_auth_profiles()
+            print("Auth commands:")
+            print("  tpfireman auth add")
+            print("  tpfireman auth edit <name-or-id>")
+            print("  tpfireman auth rename <name-or-id> <new-name>")
+            print("  tpfireman auth delete <name-or-id> [name-or-id ...] | --all")
+            print("  tpfireman auth list")
         elif command in ("delete", "remove"):
             if "--all" not in args[2:]:
                 refs = args[2:]
