@@ -6,6 +6,7 @@ import json
 import os
 import getpass
 import re
+import shlex
 from auth_store import auth_command, select_auth_headers
 from datetime import datetime
 from urllib.parse import urlsplit
@@ -167,22 +168,76 @@ def print_http_response(status_code, headers, raw_data, secrets_to_hide):
     print(redact_text(body, secrets_to_hide))
 
 
-def main():
-    """Parse CLI input, build and send one HTTP request, then handle its response."""
-    if auth_command(sys.argv[1:]):
+def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=False):
+    """Run one request, or start an interactive command session without arguments."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and auth_command(argv):
         return
-    print_logo()
-    check_for_update_notice()
-    check_admin()
+    if not argv:
+        print_logo()
+        check_for_update_notice()
+        check_admin()
+        print("Enter METHOD URL [--timeout SECONDS] [TRUE|FALSE], 'guided' for prompts, or 'exit' to quit.")
+        while True:
+            try:
+                command = input("tpfireman> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                return
+            if not command:
+                continue
+            if command.lower() in {"exit", "quit"}:
+                return
+            guided_payload = None
+            guided_payload_set = False
+            if command.lower() == "guided":
+                method_input = input("Method: ").strip()
+                url_input = input("URL: ").strip()
+                argv = [method_input, url_input]
+                if method_input.upper() in {"POST", "PUT", "PATCH"}:
+                    if input("Provide a JSON payload? (y/n): ").strip().lower() == "y":
+                        print("Paste JSON; finish with an empty line:")
+                        lines = []
+                        while True:
+                            line = input()
+                            if not line:
+                                break
+                            lines.append(line)
+                        guided_payload = " ".join(lines)
+                        try:
+                            json.loads(guided_payload)
+                        except json.JSONDecodeError:
+                            print("Invalid JSON provided.")
+                            continue
+                        guided_payload_set = True
+                export_input = input("Export response? (y/n): ").strip().lower()
+                argv.append("TRUE" if export_input == "y" else "FALSE")
+            else:
+                try:
+                    argv = shlex.split(command, posix=False)
+                except ValueError as exc:
+                    print("Invalid command: {}".format(exc))
+                    continue
+            try:
+                if argv and auth_command(argv):
+                    continue
+                main(argv, show_banner=False, guided_payload=guided_payload, guided_payload_set=guided_payload_set)
+            except SystemExit:
+                pass
 
-    if len(sys.argv) < 3:
-        print(f"{YELLOW}Usage: tpfireman <METHOD> <URL> [EXPORT:TRUE|FALSE] [PAYLOAD:JSON_STRING]{RESET}")
+    if show_banner:
+        print_logo()
+        check_for_update_notice()
+        check_admin()
+
+    if len(argv) < 2:
+        print(f"{YELLOW}Usage: tpfireman <METHOD> <URL> [--timeout SECONDS] [EXPORT:TRUE|FALSE]{RESET}")
         print(f"Methods: GET, POST, PUT, DELETE, PATCH")
         print(f"Example: tpfireman POST https://api.example.com/data")
-        sys.exit(1)
+        return
 
-    method = sys.argv[1].strip().upper()
-    url = sys.argv[2].strip()
+    method = argv[0].strip().upper()
+    url = argv[1].strip()
 
     supported_methods = {"GET", "POST", "PUT", "DELETE", "PATCH"}
     if method not in supported_methods:
@@ -202,7 +257,7 @@ def main():
     # Parse optional flags separately from the method and URL, enforcing safe limits.
     export_mode = False
     timeout_seconds = 10
-    positional_args = sys.argv[3:]
+    positional_args = argv[2:]
     while positional_args and positional_args[0].startswith("--"):
         option = positional_args.pop(0)
         if option != "--timeout" or not positional_args:
@@ -259,7 +314,9 @@ def main():
     payload_methods = ["POST", "PUT", "PATCH"]
     
     # If no payload is provided via command line and it is a method that supports it
-    if method in payload_methods and len(sys.argv) == 3:
+    if guided_payload_set:
+        payload = json.loads(guided_payload) if guided_payload else None
+    elif method in payload_methods and len(argv) == 2:
         ans = input(f"{YELLOW}Do you want to provide a JSON payload? (y/n): {RESET}").lower()
         if ans == "y":
             print(f"{YELLOW}Paste your JSON payload here. Finish by entering an empty line:{RESET}")

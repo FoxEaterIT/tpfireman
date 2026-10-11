@@ -59,6 +59,15 @@ The installer copies the app to `%LOCALAPPDATA%\Programs\tpfireman`, prepares `%
 ## 🚦 Quick start
 
 ```powershell
+# Start an interactive session (type exit to leave)
+tpfireman
+
+# Send a request directly at the session prompt
+GET https://jsonplaceholder.typicode.com/posts/1
+
+# Or choose guided prompts from the session prompt
+guided
+
 # Send a GET request
 tpfireman GET https://jsonplaceholder.typicode.com/posts/1
 
