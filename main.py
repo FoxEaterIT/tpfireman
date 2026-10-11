@@ -8,9 +8,10 @@ import re
 import shlex
 from auth_store import auth_command, list_auth_profiles, select_auth_headers
 from history_store import history_command, save_request
+from timeout_store import get_timeout, timeout_command
 from datetime import datetime
 from urllib.parse import urlsplit
-from terminal_ui import BOLD, BLUE, CYAN, DIM, GREEN, RESET, YELLOW, panel, paint, section
+from terminal_ui import BOLD, BLUE, CYAN, DIM, GREEN, RESET, YELLOW, RequestLoader, panel, paint, section
 
 # ANSI Color Codes
 WHITE = "\033[97m"
@@ -188,6 +189,8 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
         return
     if argv and history_command(argv):
         return
+    if argv and timeout_command(argv):
+        return
     if not argv:
         print_logo()
         check_for_update_notice()
@@ -224,6 +227,8 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
                     argv = shlex.split(command, posix=False)
                 if argv and auth_command(argv):
                     continue
+                if argv and timeout_command(argv):
+                    continue
                 if argv and history_command(argv):
                     continue
                 main(argv, show_banner=False, guided_payload=guided_payload, guided_payload_set=guided_payload_set, history_id=history_id if command.casefold().startswith("history") else None)
@@ -259,7 +264,7 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
     cli_payload = None
     cli_payload_set = False
     export_mode = False
-    timeout_seconds = 10
+    timeout_seconds = get_timeout()
     request_args = argv[1:]
     positional_args = []
     while request_args:
@@ -394,16 +399,17 @@ def main(argv=None, show_banner=True, guided_payload=None, guided_payload_set=Fa
             req.data = json.dumps(payload).encode("utf-8")
             req.add_header("Content-Type", "application/json")
         
-        try:
-            response = urllib.request.urlopen(req, timeout=timeout_seconds)
-        except urllib.error.HTTPError as http_error:
-            # HTTPError is also a response: handle it with the same status/header/body format.
-            response = http_error
+        with RequestLoader("Connecting to API"):
+            try:
+                response = urllib.request.urlopen(req, timeout=timeout_seconds)
+            except urllib.error.HTTPError as http_error:
+                # HTTPError is also a response: handle it with the same status/header/body format.
+                response = http_error
 
-        with response:
-            status_code = response.getcode()
-            raw_data = response.read().decode("utf-8", errors="replace")
-            response_headers = response.headers
+            with response:
+                status_code = response.getcode()
+                raw_data = response.read().decode("utf-8", errors="replace")
+                response_headers = response.headers
 
         print_http_response(status_code, response_headers, raw_data, secrets_to_hide)
         if status_code >= 400:

@@ -9,14 +9,15 @@
 - `main.py` — punto d'ingresso e implementazione: parsing degli argomenti, controllo best-effort della release all'avvio, richiesta HTTP, stampa della risposta ed esportazione facoltativa; mostra anche i profili auth salvati e accetta `--auth`, `--payload` e `--export`.
 - `auth_store.py` — gestione profili auth; `tpfireman auth` e `tpfireman auth list` mostrano elenco e help.
 - `history_store.py` — archivio per utente delle richieste HTTP riutilizzabili, con etichetta distinta dall'URL, deduplicazione per metodo e URL e help esplicito senza prompt di selezione.
+- `timeout_store.py` — timeout predefinito persistente (300 secondi) e comandi `timeout show|edit|delete`.
 - `terminal_ui.py` — stili ANSI e pannelli per helper, con supporto `NO_COLOR` e output non interattivo senza colori.
-- `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente; installer e updater devono distribuire tutti i moduli Python, incluso `history_store.py` e `terminal_ui.py`.
+- `install.ps1` / `uninstall.ps1` — installazione e disinstallazione per l'utente corrente; installer e updater devono distribuire tutti i moduli Python, incluso `history_store.py`, `terminal_ui.py` e `timeout_store.py`.
 - `VERSION` — versione SemVer copiata nell'installazione.
-- `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, ripara anche `history_store.py` o `terminal_ui.py` mancanti reinstallando la release corrente, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
+- `update.ps1` — updater per release GitHub, che scarica l'asset ZIP `tpfireman-source.zip`, ripara i moduli Python mancanti reinstallando la release corrente, chiede conferma (`YES`, `yes`, `Y` o `y`) e preserva i dati utente.
 - `bin/tpfireman.bat` — wrapper che gestisce `version`, `update`, `uninstall` e inoltra gli altri argomenti a `main.py`.
 - `README.md` — documentazione d'uso e installazione.
 
-Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py`, che richiedono Internet e usano JSONPlaceholder. Non dichiara dipendenze esterne né configurazione di build. La logica usa la libreria standard Python (`urllib`, `json`, `os`, `datetime`, `unittest`).
+Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py`, che richiedono Internet e usano JSONPlaceholder. I test locali coprono anche la configurazione timeout in `tests/test_timeout_store.py`. Non dichiara dipendenze esterne né configurazione di build. La logica usa la libreria standard Python (`urllib`, `json`, `os`, `datetime`, `unittest`).
 
 ## TODO / prossimi step
 
@@ -35,6 +36,9 @@ Il progetto include test d'integrazione online in `tests/test_jsonplaceholder.py
 - [x] Uniformare il nome del comando a `tpfireman` in README e wrapper.
 - [x] Correggere la sintassi d'uso nel README: il payload è interattivo e non è un argomento CLI.
 - [x] Rimuovere `QUERY` dall'elenco dei metodi supportati, essendo un errore.
+
+### Completati
+- [x] Aggiungere un timeout predefinito persistente di 300 secondi, modificabile con `timeout edit`, consultabile con `timeout show` e ripristinabile con conferma tramite `timeout delete`.
 
 ### Da fare, in ordine
 1. [x] Migliorare la validazione di metodo, URL e payload JSON, con messaggi d'errore chiari.

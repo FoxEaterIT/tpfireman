@@ -83,8 +83,16 @@ tpfireman GET https://jsonplaceholder.typicode.com/posts/1
 # POST request; payload is entered interactively
 tpfireman POST https://jsonplaceholder.typicode.com/posts
 
-# Set a 30-second timeout
+# Override the saved timeout for one request
 tpfireman GET https://example.com --timeout 30
+
+# Manage the saved default (300 seconds / 5 minutes)
+tpfireman timeout show
+tpfireman timeout edit 600
+tpfireman timeout delete
+
+# Omit seconds to enter the new value interactively
+tpfireman timeout edit
 
 # Export the response (you will be prompted for a file path)
 tpfireman GET https://jsonplaceholder.typicode.com/posts/1 EXPORT:TRUE
@@ -107,6 +115,8 @@ tpfireman POST --auth my-api https://api.example.com/items --payload '{"name":"d
 ```
 
 ## 🗂️ Request history
+
+The default request timeout is 300 seconds (5 minutes), saved alongside authentication profiles and request history. Manage it with `tpfireman timeout show`, `tpfireman timeout edit [SECONDS]`, or `tpfireman timeout delete` (asks for confirmation and restores the 5-minute default). A per-request `--timeout SECONDS` overrides the saved value.
 
 Successful requests are saved locally with their method, URL, optional payload, export setting, and label. Entries are deduplicated by method and URL and updated when reused.
 

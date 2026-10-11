@@ -1,6 +1,8 @@
 """Small, dependency-free terminal styling helpers."""
 import os
 import sys
+import threading
+import time
 
 
 _COLOR_ENABLED = sys.stdout.isatty() and "NO_COLOR" not in os.environ and os.environ.get("TERM", "") != "dumb"
@@ -30,3 +32,43 @@ def panel(title, rows, color=CYAN):
 
 def section(title):
     print(paint(title, BOLD + CYAN))
+
+
+class RequestLoader:
+    """Animated request indicator that stays silent for redirected output."""
+
+    _FRAMES = ("◜", "◠", "◝", "◞", "◡", "◟")
+    _BAR = ("▰", "▱", "▱", "▱", "▱", "▱", "▱", "▱", "▱", "▱")
+
+    def __init__(self, label="Sending request"):
+        self.label = label
+        self.enabled = _COLOR_ENABLED
+        self._stop = threading.Event()
+        self._thread = None
+        self._start = None
+
+    def __enter__(self):
+        if self.enabled:
+            self._start = time.monotonic()
+            self._thread = threading.Thread(target=self._animate, daemon=True)
+            self._thread.start()
+        return self
+
+    def _animate(self):
+        index = 0
+        while not self._stop.wait(0.1):
+            elapsed = time.monotonic() - self._start
+            bar = list(self._BAR)
+            bar[index % len(bar)] = "▰"
+            frame = self._FRAMES[index % len(self._FRAMES)]
+            line = "\r{} {} {} {} {:.1f}s{}".format(CYAN, frame, self.label, "".join(bar), elapsed, RESET)
+            sys.stdout.write(line)
+            sys.stdout.flush()
+            index += 1
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.enabled:
+            self._stop.set()
+            self._thread.join()
+            sys.stdout.write("\r" + " " * (len(self.label) + 32) + "\r")
+            sys.stdout.flush()
